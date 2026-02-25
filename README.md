@@ -56,6 +56,20 @@ This image is structured to be adaptable to Arch immutable solutions like
 [Immuarch](https://bbs.archlinux.org/viewtopic.php?id=311910) when you're
 ready to make it a bootable OS.
 
+## Build phases
+
+The image is assembled in seven sequential `RUN` steps:
+
+| Script | Phase | What it does |
+|--------|-------|--------------|
+| `01-base.sh` | Base | Enables multilib, installs `base-devel`, sets up the `builder` AUR user, installs `yay` |
+| `02-nvidia.sh` | NVIDIA | Installs open drivers, `nvidia-utils`, Vulkan loader, VA-API, OpenCL, container toolkit — including all `lib32-*` multilib variants |
+| `03-hyprland.sh` | Hyprland | Installs Hyprland, portal, PipeWire/WirePlumber, dunst, rofi, grim/slurp, SDDM |
+| `04-gaming.sh` | Gaming | Steam, Gamescope, MangoHud, Lutris, Wine (staging + deps), gamemode; AUR: `protonup-qt-bin`, `game-devices-udev` |
+| `05-caelestia.sh` | Caelestia | Qt 6.x stack, `quickshell-git` (AUR), clones Caelestia shell + dotfiles into `/etc/skel` |
+| `06-desktop.sh` | Desktop | kitty, fish, Thunar, mpv, Firefox, Discord, Nerd Fonts, CLI tools; AUR: `swww` |
+| `07-finalize.sh` | Finalize | Installs `zram-generator`, `podman`, `flatpak`; clears pacman + yay caches |
+
 ## Building locally
 
 ```bash
@@ -83,6 +97,32 @@ podman build -t hyprland-gaming-rig -f Containerfile .
 | Gaming sysctl | `system_files/etc/sysctl.d/99-gaming.conf` |
 | I/O scheduler | `system_files/etc/udev/rules.d/60-io-scheduler.rules` |
 | zram swap | `system_files/etc/zram-generator/zram-generator.conf` |
+
+## Contributing
+
+### Adding packages
+
+**Official repo packages** — add to the relevant `pacman -S --noconfirm --needed` block in the appropriate phase script.
+
+**AUR packages** — always use the `yay` call at the end of the phase script:
+
+```bash
+sudo -u builder yay -S --noconfirm --needed \
+    your-aur-package \
+    || true
+```
+
+The `|| true` keeps AUR failures non-fatal so a single unavailable AUR package can't break the entire build.
+
+> **Never install AUR packages with `pacman`** — they won't be found and the build will fail.
+
+### `lib32-*` / multilib packages
+
+All 32-bit packages live in the `[multilib]` repo. `01-base.sh` enables multilib and syncs the database; `02-nvidia.sh` re-syncs at the start of the phase as a safety net. If you add a new `lib32-*` package, place it in phase 2 or later — never in phase 1 before the initial sync completes.
+
+### system_files
+
+Drop any file you want present in the image under `system_files/` mirroring its final path. The `Containerfile` does `COPY system_files/ /` so `system_files/etc/foo` lands at `/etc/foo`.
 
 ## License
 
