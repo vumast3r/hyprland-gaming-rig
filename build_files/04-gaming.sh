@@ -34,11 +34,9 @@ pacman -S --noconfirm --needed \
     lib32-giflib \
     lib32-gst-plugins-base
 
-pacman -S --noconfirm --needed \
-    game-devices-udev
-
 sudo -u builder yay -S --noconfirm --needed \
     protonup-qt-bin \
+    game-devices-udev \
     || true
 
 echo "==> Phase 4 complete"

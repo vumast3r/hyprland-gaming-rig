@@ -2,6 +2,8 @@
 set -euo pipefail
 echo "==> Phase 2: NVIDIA"
 
+pacman -Sy --noconfirm
+
 pacman -S --noconfirm --needed \
     nvidia-open \
     nvidia-utils \
