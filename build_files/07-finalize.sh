@@ -14,6 +14,11 @@ rm -rf /var/cache/pacman/pkg/*
 rm -rf /home/builder/.cache/yay/*
 rm -rf /tmp/*
 
+# Remove the build-time AUR user — its UID (1000) would conflict with the
+# host user that distrobox injects into the container at runtime.
+sed -i '/^builder ALL=/d' /etc/sudoers
+userdel -r builder || true
+
 echo ""
 echo "============================================="
 echo "  Hyprland Gaming Rig — Build complete!"
